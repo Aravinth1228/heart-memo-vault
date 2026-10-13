@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Heart, ImagePlus, LockKeyhole, Sparkles } from "lucide-react";
 
@@ -43,6 +43,7 @@ const PHOTO_STORAGE_KEY = "aravinthlove-photos-v1";
 
 function MemoriesPage() {
   const memories = Route.useLoaderData();
+  const navigate = useNavigate();
   const lockMemories = useServerFn(lockLoveMemories);
   const [photos, setPhotos] = useState<Record<number, string>>({});
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -100,7 +101,7 @@ function MemoriesPage() {
 
   async function handleLock() {
     await lockMemories();
-    await Route.router.navigate({ to: "/" });
+    await navigate({ to: "/" });
   }
 
   const selectedMemory = selectedIndex === null ? null : memories[selectedIndex];
