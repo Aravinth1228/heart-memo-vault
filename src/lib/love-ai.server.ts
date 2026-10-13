@@ -1,17 +1,37 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 
+const LOVABLE_RUN_ID_HEADER = "X-Lovable-AIG-Run-ID";
+
+function createRunIdFetch(initialRunId?: string) {
+  let runId = initialRunId?.trim() || undefined;
+  return {
+    fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      if (runId && !headers.has(LOVABLE_RUN_ID_HEADER)) {
+        headers.set(LOVABLE_RUN_ID_HEADER, runId);
+      }
+      const response = await fetch(input, { ...init, headers });
+      runId ??= response.headers.get(LOVABLE_RUN_ID_HEADER)?.trim() || undefined;
+      return response;
+    },
+    getRunId: () => runId,
+  };
+}
+
 const MODEL = "openai/gpt-6-astra";
 
 export async function writeLoveMessage(
   memory: string,
   tone: "longing" | "deep" | "sweet",
+  initialRunId?: string,
 ) {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) {
     throw new Error("AI love notes are not configured right now.");
   }
 
+  const gateway = createRunIdFetch(initialRunId);
   const provider = createOpenAI({
     baseURL: "https://ai.gateway.lovable.dev/v1",
     apiKey,
@@ -19,6 +39,7 @@ export async function writeLoveMessage(
       "Lovable-API-Key": apiKey,
       "X-Lovable-AIG-SDK": "vercel-ai-sdk",
     },
+    fetch: gateway.fetch,
   });
 
   const toneDirections = {
