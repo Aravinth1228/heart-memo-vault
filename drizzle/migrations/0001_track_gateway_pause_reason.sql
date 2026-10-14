@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_gateway_access_state ADD COLUMN state_kind text NOT NULL DEFAULT 'provider_denial';

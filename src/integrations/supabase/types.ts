@@ -18,16 +18,19 @@ export type Database = {
         Row: {
           denial_message: string
           state_key: string
+          state_kind: string
           updated_at: string
         }
         Insert: {
           denial_message: string
           state_key: string
+          state_kind?: string
           updated_at?: string
         }
         Update: {
           denial_message?: string
           state_key?: string
+          state_kind?: string
           updated_at?: string
         }
         Relationships: []
