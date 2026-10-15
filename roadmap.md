@@ -1,5 +1,6 @@
 ## In progress
-- [ ] Finish the shared-memory AI love-note feature in English.
-- [ ] Translate the password gate and all ten memory notes to English.
-- [ ] Verify the public gate, unlocked memories, password lock, and successful AI Gateway response.
-- [ ] Run the focused project checks and review preview diagnostics.
+- [ ] Add and verify a show/hide control for the password field.
+- [ ] Finish the English shared-memory love-note writer, tone choices, and clipboard copy control.
+- [ ] Translate all memory-page text and all ten memory notes to English.
+- [ ] Verify the password gate, memories, lock flow, and AI Gateway response in the preview.
+- [ ] Run focused tests and review preview diagnostics.
