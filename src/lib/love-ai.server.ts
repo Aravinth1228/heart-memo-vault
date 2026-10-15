@@ -9,21 +9,21 @@ const LOVABLE_RUN_ID_HEADER = "X-Lovable-AIG-Run-ID";
 const MODEL = "openai/gpt-6-astra";
 
 type GatewayFailure = {
-  status?: number;
-  kind?: string;
-  message?: string;
+  status?: number | undefined;
+  kind?: string | undefined;
+  message?: string | undefined;
 };
 
 function readFailure(error: unknown): GatewayFailure {
   if (!error || typeof error !== "object") return {};
   const item = error as Record<string, unknown>;
-  const cause = item.cause && typeof item.cause === "object"
-    ? (item.cause as Record<string, unknown>)
+  const cause = item["cause"] && typeof item["cause"] === "object"
+    ? (item["cause"] as Record<string, unknown>)
     : {};
-  const status = [item.statusCode, item.status, cause.statusCode, cause.status].find(
+  const status = [item["statusCode"], item["status"], cause["statusCode"], cause["status"]].find(
     (value): value is number => typeof value === "number",
   );
-  const bodies = [item.responseBody, cause.responseBody, item.message, cause.message];
+  const bodies = [item["responseBody"], cause["responseBody"], item["message"], cause["message"]];
 
   for (const body of bodies) {
     if (typeof body !== "string") continue;
@@ -33,8 +33,8 @@ function readFailure(error: unknown): GatewayFailure {
         const payload = parsed as Record<string, unknown>;
         return {
           status,
-          kind: typeof payload.type === "string" ? payload.type : undefined,
-          message: typeof payload.message === "string" ? payload.message : undefined,
+          kind: typeof payload["type"] === "string" ? payload["type"] : undefined,
+          message: typeof payload["message"] === "string" ? payload["message"] : undefined,
         };
       }
     } catch {
