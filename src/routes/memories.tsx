@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Heart, ImagePlus, LockKeyhole, Sparkles } from "lucide-react";
+import { Check, Copy, Heart, ImagePlus, LockKeyhole, Sparkles } from "lucide-react";
 
 import loveBackdrop from "@/assets/love-memory-backdrop.jpg";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { generateLoveMessage } from "@/lib/love-ai.functions";
 import {
   getLoveMemories,
   lockLoveMemories,
@@ -22,15 +24,15 @@ export const Route = createFileRoute("/memories")({
   loader: () => getLoveMemories(),
   head: () => ({
     meta: [
-      { title: "Namma Ninaivugal — Aravinthlove" },
+      { title: "Our Memories — Aravinthlove" },
       {
         name: "description",
-        content: "Aravinthin kaadhalum miss panra ninaivugalum — ungalukkaaga mattum.",
+        content: "A private collection of shared memories and heartfelt love notes, made just for you.",
       },
-      { property: "og:title", content: "Namma Ninaivugal — Aravinthlove" },
+      { property: "og:title", content: "Our Memories — Aravinthlove" },
       {
         property: "og:description",
-        content: "Aravinthin kaadhalum miss panra ninaivugalum — ungalukkaaga mattum.",
+        content: "A private collection of shared memories and heartfelt love notes, made just for you.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -45,9 +47,16 @@ function MemoriesPage() {
   const memories = Route.useLoaderData();
   const navigate = useNavigate();
   const lockMemories = useServerFn(lockLoveMemories);
+  const generateNote = useServerFn(generateLoveMessage);
   const [photos, setPhotos] = useState<Record<number, string>>({});
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [uploadNotice, setUploadNotice] = useState("");
+  const [sharedMemory, setSharedMemory] = useState("");
+  const [tone, setTone] = useState<"longing" | "deep" | "sweet">("longing");
+  const [loveNote, setLoveNote] = useState("");
+  const [noteError, setNoteError] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     try {
@@ -72,14 +81,14 @@ function MemoriesPage() {
         }
       }
     } catch {
-      setUploadNotice("Saved photos-a open panna mudiyala. Oru pudhu photo add panni paarunga.");
+      setUploadNotice("Saved photos could not be opened. Try adding a photo again.");
     }
   }, [memories.length]);
 
   function addPhoto(photoIndex: number, file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setUploadNotice("Image file mattum select pannunga.");
+      setUploadNotice("Please choose an image file.");
       return;
     }
 
@@ -90,18 +99,46 @@ function MemoriesPage() {
       try {
         localStorage.setItem(PHOTO_STORAGE_KEY, JSON.stringify(nextPhotos));
         setPhotos(nextPhotos);
-        setUploadNotice("Photo save aayiduchu.");
+        setUploadNotice("Photo saved in this browser.");
       } catch {
-        setUploadNotice("Indha photo romba perusa irukku. Konjam chinna photo select pannunga.");
+        setUploadNotice("This photo is too large. Please choose a smaller image.");
       }
     };
-    reader.onerror = () => setUploadNotice("Indha photo-va load panna mudiyala. Vera photo try pannunga.");
+    reader.onerror = () => setUploadNotice("This photo could not be loaded. Please try another one.");
     reader.readAsDataURL(file);
   }
 
   async function handleLock() {
     await lockMemories();
     await navigate({ to: "/" });
+  }
+
+  async function handleGenerateNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setNoteError("");
+    setLoveNote("");
+    setIsCopied(false);
+    setIsGenerating(true);
+    try {
+      const result = await generateNote({ data: { memory: sharedMemory, tone } });
+      if (result.ok) setLoveNote(result.message);
+      else setNoteError(result.error);
+    } catch {
+      setNoteError("Your love note could not be written right now. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  async function handleCopyNote() {
+    try {
+      await navigator.clipboard.writeText(loveNote);
+      setIsCopied(true);
+      setNoteError("");
+    } catch {
+      setIsCopied(false);
+      setNoteError("This browser could not copy the note. Please select and copy it instead.");
+    }
   }
 
   const selectedMemory = selectedIndex === null ? null : memories[selectedIndex];
@@ -124,14 +161,84 @@ function MemoriesPage() {
 
       <section className="memory-shell" aria-labelledby="memory-title">
         <header className="memory-collection-header">
-          <div className="memory-kicker"><Sparkles size={15} /> Unakku mattum, en anbudan</div>
-          <h1 className="memory-title" id="memory-title">Namma ninaivugal</h1>
+          <div className="memory-kicker"><Sparkles size={15} /> Just for you, with all my love</div>
+          <h1 className="memory-title" id="memory-title">Our memories</h1>
           <p className="memory-lede">
-            Ovvoru padathukkullayum namma oru azhagana nyabagam irukku.
-            Unna evlo love panren, evlo miss panren nu indha chinna idathula vechurukken.
+            Every photo holds a little piece of us. Here are a few reminders of how much I love
+            you and how much I miss you.
           </p>
-          <span className="memory-count"><Heart size={14} fill="currentColor" /> 10 chinna love notes</span>
+          <span className="memory-count"><Heart size={14} fill="currentColor" /> 10 little love notes</span>
         </header>
+
+        <section className="memory-ai-section" aria-labelledby="memory-ai-title">
+          <div className="memory-ai-intro">
+            <div className="memory-kicker"><Sparkles size={15} /> A note from the heart</div>
+            <h2 className="memory-ai-title" id="memory-ai-title">Turn a memory into a love note</h2>
+            <p className="memory-ai-copy">
+              Share a little moment, and I’ll turn it into a heartfelt message about loving and
+              missing you.
+            </p>
+          </div>
+          <form className="memory-ai-tool" onSubmit={handleGenerateNote}>
+            <label className="memory-ai-label" htmlFor="shared-memory">A memory we share</label>
+            <Textarea
+              id="shared-memory"
+              className="memory-ai-textarea"
+              placeholder="Tell me about a moment you love remembering…"
+              value={sharedMemory}
+              onChange={(event) => setSharedMemory(event.currentTarget.value)}
+              minLength={3}
+              maxLength={500}
+              required
+            />
+            <div className="memory-ai-meta">
+              <span>Choose a feeling</span>
+              <span>{sharedMemory.length}/500</span>
+            </div>
+            <div className="memory-ai-tones" role="group" aria-label="Love note tone">
+              {([
+                ["longing", "Missing you"],
+                ["deep", "Deep love"],
+                ["sweet", "Sweet & warm"],
+              ] as const).map(([value, label]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  size="sm"
+                  variant={tone === value ? "default" : "outline"}
+                  aria-pressed={tone === value}
+                  onClick={() => setTone(value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <Button className="memory-ai-generate" type="submit" disabled={isGenerating || sharedMemory.trim().length < 3}>
+              <Heart size={16} fill="currentColor" />
+              {isGenerating ? "Writing your note…" : "Write my love note"}
+            </Button>
+            {noteError && <p className="memory-ai-error" role="alert">{noteError}</p>}
+            {loveNote && (
+              <div className="memory-ai-result">
+                <div className="memory-ai-result-heading">
+                  <span>Your love note</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyNote}
+                    aria-label={isCopied ? "Love note copied" : "Copy love note"}
+                    title={isCopied ? "Copied" : "Copy love note"}
+                  >
+                    {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                    {isCopied ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+                <p className="memory-ai-note" aria-live="polite">{loveNote}</p>
+              </div>
+            )}
+          </form>
+        </section>
 
         <div className="memory-collection">
           {memories.map((memory, index) => (
@@ -145,7 +252,7 @@ function MemoriesPage() {
                 <span className="memory-card-photo">
                   <span className="memory-number">{memory.number}</span>
                   {photos[index] ? (
-                    <img src={photos[index]} alt={`Ninaivu ${memory.number}: ${memory.title}`} />
+                    <img src={photos[index]} alt={`Memory ${memory.number}: ${memory.title}`} />
                   ) : (
                     <span className="memory-photo-placeholder"><Heart size={23} /></span>
                   )}
@@ -157,7 +264,7 @@ function MemoriesPage() {
               </Button>
               <div className="memory-upload-row">
                 <label className="memory-upload-label" htmlFor={`photo-${index}`}>
-                  {photos[index] ? "Photo maathu" : "Photo seru"}
+                  {photos[index] ? "Change photo" : "Add photo"}
                 </label>
                 <Input
                   id={`photo-${index}`}
@@ -179,9 +286,9 @@ function MemoriesPage() {
         </div>
 
         <p className="memory-storage-note" role="status">
-          {uploadNotice || "Ungal photos indha browser-la mattum save aagum."}
+          {uploadNotice || "Your photos are saved in this browser only."}
         </p>
-        <footer className="memory-footer"><Heart size={13} fill="currentColor" /> Eppavume un Aravinth</footer>
+        <footer className="memory-footer"><Heart size={13} fill="currentColor" /> Always yours, Aravinth</footer>
       </section>
 
       <Dialog open={selectedMemory !== null} onOpenChange={(open) => !open && setSelectedIndex(null)}>
@@ -189,7 +296,7 @@ function MemoriesPage() {
           {selectedMemory && (
             <>
               <DialogHeader>
-                <span className="memory-dialog-number">NYAABAGAM {selectedMemory.number}</span>
+                <span className="memory-dialog-number">MEMORY {selectedMemory.number}</span>
                 <DialogTitle className="memory-dialog-title">{selectedMemory.title}</DialogTitle>
                 <DialogDescription>{selectedMemory.teaser}</DialogDescription>
               </DialogHeader>

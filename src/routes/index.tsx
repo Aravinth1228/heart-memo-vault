@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Heart, LockKeyhole, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Heart, LockKeyhole, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ function LoveGatePage() {
   const navigate = useNavigate();
   const unlock = useServerFn(unlockLoveMemories);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
 
@@ -41,12 +42,12 @@ function LoveGatePage() {
     try {
       const result = await unlock({ data: { password } });
       if (!result.ok) {
-        setMessage("Indha password sari illa. Marubadi try pannunga.");
+        setMessage("That password is not correct. Please try again.");
         return;
       }
       await navigate({ to: "/memories" });
     } catch {
-      setMessage("Ippo memories-a open panna mudiyala. Konjam nerathula try pannunga.");
+      setMessage("Your memories could not be opened. Please try again in a moment.");
     } finally {
       setIsUnlocking(false);
     }
@@ -79,17 +80,31 @@ function LoveGatePage() {
             Enter our secret password to open the memories I saved for you.
           </p>
           <label className="sr-only" htmlFor="love-password">Password</label>
-          <Input
-            id="love-password"
-            className="memory-passcode-input"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Enter our password"
-            value={password}
-            onChange={(event) => setPassword(event.currentTarget.value)}
-            maxLength={256}
-            required
-          />
+          <div className="memory-password-control">
+            <Input
+              id="love-password"
+              className="memory-passcode-input"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter our password"
+              value={password}
+              onChange={(event) => setPassword(event.currentTarget.value)}
+              maxLength={256}
+              required
+            />
+            <Button
+              className="memory-password-toggle"
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              title={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </Button>
+          </div>
           <Button className="memory-open-button" type="submit" disabled={isUnlocking}>
             <Heart size={16} fill="currentColor" />
             {isUnlocking ? "Opening your memories…" : "Open our memories"}
