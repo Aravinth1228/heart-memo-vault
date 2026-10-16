@@ -73,7 +73,7 @@ function LoveGatePage() {
           <div className="memory-divider" aria-hidden="true"><Heart size={16} fill="currentColor" /></div>
           <div className="memory-miss-moment" aria-label="Missing you, Mrs. Aravinth">
             <span className="memory-miss-toy" aria-hidden="true">
-              <span className="memory-miss-bear">🧸</span>
+              <span className="memory-miss-bear" />
               <Heart className="memory-miss-heart" size={17} fill="currentColor" />
             </span>
             <p>I miss you a little more with every heartbeat.</p>
