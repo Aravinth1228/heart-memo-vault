@@ -4,6 +4,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { Check, Copy, Heart, ImagePlus, LockKeyhole, Sparkles } from "lucide-react";
 
 import loveBackdrop from "@/assets/love-memory-backdrop.jpg";
+import memory01 from "@/assets/memory-01.webp.asset.json";
+import memory02 from "@/assets/memory-02.png.asset.json";
+import memory03 from "@/assets/memory-03.webp.asset.json";
+import memory04 from "@/assets/memory-04.png.asset.json";
+import memory05 from "@/assets/memory-05.webp.asset.json";
+import memory06 from "@/assets/memory-06.webp.asset.json";
+import memory07 from "@/assets/memory-07.webp.asset.json";
+import memory08 from "@/assets/memory-08.webp.asset.json";
+import memory09 from "@/assets/memory-09.webp.asset.json";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,15 +33,15 @@ export const Route = createFileRoute("/memories")({
   loader: () => getLoveMemories(),
   head: () => ({
     meta: [
-      { title: "Our Memories — Aravinthlove" },
+      { title: "Our Memories — Mrs. Aravinth" },
       {
         name: "description",
-        content: "A private collection of shared memories and heartfelt love notes, made just for you.",
+        content: "A private collection of shared photos and heartfelt love notes, made just for you, Mrs. Aravinth.",
       },
-      { property: "og:title", content: "Our Memories — Aravinthlove" },
+      { property: "og:title", content: "Our Memories — Mrs. Aravinth" },
       {
         property: "og:description",
-        content: "A private collection of shared memories and heartfelt love notes, made just for you.",
+        content: "A private collection of shared photos and heartfelt love notes, made just for you, Mrs. Aravinth.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -42,13 +51,28 @@ export const Route = createFileRoute("/memories")({
 });
 
 const PHOTO_STORAGE_KEY = "aravinthlove-photos-v1";
+const BUNDLED_MEMORY_PHOTOS = [
+  memory01.url,
+  memory02.url,
+  memory03.url,
+  memory04.url,
+  memory05.url,
+  memory06.url,
+  memory07.url,
+  memory08.url,
+  memory09.url,
+];
+
+const DEFAULT_PHOTOS = Object.fromEntries(
+  BUNDLED_MEMORY_PHOTOS.map((url, index) => [index, url]),
+);
 
 function MemoriesPage() {
   const memories = Route.useLoaderData();
   const navigate = useNavigate();
   const lockMemories = useServerFn(lockLoveMemories);
   const generateNote = useServerFn(generateLoveMessage);
-  const [photos, setPhotos] = useState<Record<number, string>>({});
+  const [photos, setPhotos] = useState<Record<number, string>>(DEFAULT_PHOTOS);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [uploadNotice, setUploadNotice] = useState("");
   const [sharedMemory, setSharedMemory] = useState("");
@@ -77,7 +101,7 @@ function MemoriesPage() {
               safePhotos[photoNumber] = value;
             }
           }
-          setPhotos(safePhotos);
+          setPhotos({ ...DEFAULT_PHOTOS, ...safePhotos });
         }
       }
     } catch {
@@ -149,9 +173,9 @@ function MemoriesPage() {
       style={{ "--memory-wallpaper": `url("${loveBackdrop}")` } as React.CSSProperties}
     >
       <header className="memory-topbar memory-shell">
-        <a className="memory-brand" href="/memories" aria-label="Aravinthlove memories">
+        <a className="memory-brand" href="/memories" aria-label="Mrs. Aravinth memories">
           <span className="memory-brand-mark"><Heart size={18} fill="currentColor" /></span>
-          <span>Aravinthlove</span>
+          <span>Mrs. Aravinth</span>
         </a>
         <Button variant="ghost" size="sm" onClick={handleLock} aria-label="Lock memories">
           <LockKeyhole size={16} />
@@ -286,7 +310,7 @@ function MemoriesPage() {
         </div>
 
         <p className="memory-storage-note" role="status">
-          {uploadNotice || "Your photos are saved in this browser only."}
+          {uploadNotice || "Your own photos are saved in this browser only."}
         </p>
         <footer className="memory-footer"><Heart size={13} fill="currentColor" /> Always yours, Aravinth</footer>
       </section>
