@@ -10,15 +10,15 @@ import { unlockLoveMemories } from "@/lib/love-gate.functions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aravinthlove — Our little place" },
+      { title: "Mrs. Aravinth — Our little place" },
       {
         name: "description",
-        content: "A private collection of ten love notes and shared memories, made just for you.",
+        content: "A private collection of love notes and shared photos, made just for you, Mrs. Aravinth.",
       },
-      { property: "og:title", content: "Aravinthlove — Our little place" },
+      { property: "og:title", content: "Mrs. Aravinth — Our little place" },
       {
         property: "og:description",
-        content: "A private collection of ten love notes and shared memories, made just for you.",
+        content: "A private collection of love notes and shared photos, made just for you, Mrs. Aravinth.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -56,21 +56,28 @@ function LoveGatePage() {
   return (
     <main className="memory-page">
       <header className="memory-topbar memory-shell">
-        <a className="memory-brand" href="/" aria-label="Aravinthlove home">
+        <a className="memory-brand" href="/" aria-label="Mrs. Aravinth home">
           <span className="memory-brand-mark"><Heart size={18} fill="currentColor" /></span>
-          <span>Aravinthlove</span>
+          <span>Mrs. Aravinth</span>
         </a>
       </header>
 
       <section className="memory-shell memory-gate-layout" aria-labelledby="love-title">
         <div className="memory-intro">
           <div className="memory-kicker"><Sparkles size={15} /> Made only for you, with all my love</div>
-          <h1 className="memory-title" id="love-title">Aravinthlove</h1>
+          <h1 className="memory-title" id="love-title">Mrs. Aravinth</h1>
           <p className="memory-lede">
             I tucked our laughter, our talks, and all the ways I love you into this little collection
             of memories.
           </p>
           <div className="memory-divider" aria-hidden="true"><Heart size={16} fill="currentColor" /></div>
+          <div className="memory-miss-moment" aria-label="Missing you, Mrs. Aravinth">
+            <span className="memory-miss-toy" aria-hidden="true">
+              <span className="memory-miss-bear">🧸</span>
+              <Heart className="memory-miss-heart" size={17} fill="currentColor" />
+            </span>
+            <p>I miss you a little more with every heartbeat.</p>
+          </div>
         </div>
 
         <form className="memory-gate-card" onSubmit={handleSubmit}>
