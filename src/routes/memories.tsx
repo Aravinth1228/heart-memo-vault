@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Copy, Heart, ImagePlus, LockKeyhole, Sparkles } from "lucide-react";
+import { Check, Copy, Heart, ImagePlus, LockKeyhole, Mail, Sparkles } from "lucide-react";
 
 import loveBackdrop from "@/assets/love-memory-backdrop.jpg";
 import memory01 from "@/assets/memory-01.webp.asset.json";
@@ -74,6 +74,7 @@ function MemoriesPage() {
   const generateNote = useServerFn(generateLoveMessage);
   const [photos, setPhotos] = useState<Record<number, string>>(DEFAULT_PHOTOS);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [openCards, setOpenCards] = useState<Set<number>>(() => new Set());
   const [uploadNotice, setUploadNotice] = useState("");
   const [sharedMemory, setSharedMemory] = useState("");
   const [tone, setTone] = useState<"longing" | "deep" | "sweet">("longing");
@@ -165,6 +166,15 @@ function MemoriesPage() {
     }
   }
 
+  function toggleCard(index: number) {
+    setOpenCards((current) => {
+      const next = new Set(current);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
   const selectedMemory = selectedIndex === null ? null : memories[selectedIndex];
 
   return (
@@ -172,6 +182,13 @@ function MemoriesPage() {
       className="memory-page"
       style={{ "--memory-wallpaper": `url("${loveBackdrop}")` } as React.CSSProperties}
     >
+      <div className="memory-floaters" aria-hidden="true">
+        {Array.from({ length: 12 }, (_, i) => (
+          <span key={i} className={i % 3 === 0 ? "memory-sparkle" : "memory-floater"} style={{ "--i": i } as React.CSSProperties}>
+            {i % 3 === 0 ? "✦" : "♥"}
+          </span>
+        ))}
+      </div>
       <header className="memory-topbar memory-shell">
         <a className="memory-brand" href="/memories" aria-label="Mrs. Aravinth memories">
           <span className="memory-brand-mark"><Heart size={18} fill="currentColor" /></span>
@@ -265,31 +282,44 @@ function MemoriesPage() {
         </section>
 
         <div className="memory-collection">
-          {memories.map((memory, index) => (
+          {memories.map((memory, index) => {
+            const isOpen = openCards.has(index);
+            return (
             <article className="memory-item" key={memory.number}>
-              <Button
-                variant="ghost"
-                className="memory-card-button"
-                onClick={() => setSelectedIndex(index)}
-                aria-label={`Open memory ${memory.number}: ${memory.title}`}
+              <button
+                type="button"
+                className={`memory-flip${isOpen ? " is-open" : ""}`}
+                onClick={() => toggleCard(index)}
+                aria-pressed={isOpen}
+                aria-label={isOpen ? `Close memory ${memory.number}: ${memory.title}` : `Tap to open memory ${memory.number}: ${memory.title}`}
               >
-                <span className="memory-card-photo">
-                  <span className="memory-number">{memory.number}</span>
-                  {photos[index] ? (
-                    <img src={photos[index]} alt={`Memory ${memory.number}: ${memory.title}`} />
-                  ) : (
-                    <span className="memory-photo-placeholder"><Heart size={23} /></span>
-                  )}
+                <span className="memory-flip-inner">
+                  <span className="memory-flip-front" aria-hidden={isOpen}>
+                    <span className="memory-number">{memory.number}</span>
+                    <span className="memory-envelope"><Mail size={26} /><Heart className="memory-envelope-heart" size={14} fill="currentColor" /></span>
+                    <span className="memory-flip-title">{memory.title}</span>
+                    <span className="memory-flip-hint">Tap to open</span>
+                  </span>
+                  <span className="memory-flip-back" aria-hidden={!isOpen}>
+                    <span className="memory-card-photo">
+                      {isOpen && photos[index] ? (
+                        <img src={photos[index]} alt={`Memory ${memory.number}: ${memory.title}`} />
+                      ) : (
+                        <span className="memory-photo-placeholder"><Heart size={23} /></span>
+                      )}
+                    </span>
+                    <span className="memory-quote">“{memory.quote}”</span>
+                  </span>
                 </span>
-                <span className="memory-card-copy">
-                  <span className="memory-card-title">{memory.title}</span>
-                  <span className="memory-card-teaser">{memory.teaser}</span>
-                </span>
-              </Button>
+              </button>
+              <div className="memory-card-copy">
+                <span className="memory-card-title">{memory.title}</span>
+                <span className="memory-card-teaser">{memory.teaser}</span>
+              </div>
               <div className="memory-upload-row">
-                <label className="memory-upload-label" htmlFor={`photo-${index}`}>
-                  {photos[index] ? "Change photo" : "Add photo"}
-                </label>
+                <Button variant="ghost" size="sm" className="memory-upload-trigger" onClick={() => setSelectedIndex(index)}>
+                  <Heart size={14} /> Read note
+                </Button>
                 <Input
                   id={`photo-${index}`}
                   className="memory-upload-input"
@@ -301,13 +331,15 @@ function MemoriesPage() {
                 <Button asChild variant="ghost" size="sm" className="memory-upload-trigger">
                   <label htmlFor={`photo-${index}`}>
                     <ImagePlus size={15} />
-                    <span className="sr-only">Choose photo for {memory.title}</span>
+                    {photos[index] ? "Change" : "Add photo"}
                   </label>
                 </Button>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
+
 
         <p className="memory-storage-note" role="status">
           {uploadNotice || "Your own photos are saved in this browser only."}
