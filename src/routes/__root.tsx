@@ -80,12 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Mrs. Aravinth — Private Love Memories" },
       { name: "description", content: "A private collection of photos, memories, and love notes for Mrs. Aravinth." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "Aravinth" },
       { property: "og:title", content: "Mrs. Aravinth — Private Love Memories" },
       { property: "og:description", content: "A private collection of photos, memories, and love notes for Mrs. Aravinth." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

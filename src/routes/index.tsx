@@ -5,7 +5,9 @@ import { Eye, EyeOff, Heart, LockKeyhole, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import loveBackdrop from "@/assets/love-memory-backdrop.jpg";
 import { unlockLoveMemories } from "@/lib/love-gate.functions";
+import { BoyMissingGirlAnimation } from "@/components/BoyMissingGirlAnimation";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,10 +56,12 @@ function LoveGatePage() {
   }
 
   return (
-    <main className="memory-page">
+    <main
+      className="memory-page"
+      style={{ "--memory-wallpaper": `url("${loveBackdrop}")` } as React.CSSProperties}
+    >
       <header className="memory-topbar memory-shell">
         <a className="memory-brand" href="/" aria-label="Mrs. Aravinth home">
-          <span className="memory-brand-mark"><Heart size={18} fill="currentColor" /></span>
           <span>Mrs. Aravinth</span>
         </a>
       </header>
@@ -71,13 +75,9 @@ function LoveGatePage() {
             of memories.
           </p>
           <div className="memory-divider" aria-hidden="true"><Heart size={16} fill="currentColor" /></div>
-          <div className="memory-miss-moment" aria-label="Missing you, Mrs. Aravinth">
-            <span className="memory-miss-toy" aria-hidden="true">
-              <span className="memory-miss-bear" />
-              <Heart className="memory-miss-heart" size={17} fill="currentColor" />
-            </span>
-            <p>I miss you a little more with every heartbeat.</p>
-          </div>
+          
+          {/* Animated Boy missing his lover */}
+          <BoyMissingGirlAnimation />
         </div>
 
         <form className="memory-gate-card" onSubmit={handleSubmit}>
