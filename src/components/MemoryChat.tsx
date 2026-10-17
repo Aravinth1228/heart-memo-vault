@@ -139,9 +139,6 @@ export function MemoryChat() {
         <h2 className="memory-chat-title" id="chat-title">
           Leave a Love Note for Each Other
         </h2>
-        <p className="memory-chat-desc">
-          When you type a message here, it saves straight to the <strong>MongoDB database</strong> and immediately appears below for Aravinth to see!
-        </p>
       </div>
 
       <form className="memory-chat-form" onSubmit={handleSubmit}>
