@@ -88,23 +88,7 @@ function MemoriesPage() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [openCards, setOpenCards] = useState<Set<number>>(() => new Set());
 
-  // Photo PIN 1216 states
-  const [unlockedPhotos, setUnlockedPhotos] = useState<Set<number>>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem("aravinth_unlocked_photos");
-        if (saved === "ALL") return new Set(Array.from({ length: 50 }, (_, i) => i));
-        if (saved) return new Set(JSON.parse(saved));
-      } catch {}
-    }
-    return new Set();
-  });
-  const [isAllUnlocked, setIsAllUnlocked] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("aravinth_unlocked_photos") === "ALL";
-    }
-    return false;
-  });
+  // Photo PIN 1216 modal states
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [targetCardIndex, setTargetCardIndex] = useState<number | null>(null);
   const [pinAction, setPinAction] = useState<"flip" | "dialog">("flip");
@@ -113,54 +97,41 @@ function MemoriesPage() {
   const [isShaking, setIsShaking] = useState(false);
   const [pinSuccess, setPinSuccess] = useState(false);
 
-  function isPhotoUnlocked(index: number) {
-    return isAllUnlocked || unlockedPhotos.has(index);
-  }
-
   async function handleLock() {
     await lockMemories();
     await navigate({ to: "/" });
   }
 
-  function toggleCard(index: number) {
-    setOpenCards((current) => {
-      const next = new Set(current);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  }
-
   function handleCardClick(index: number) {
+    // If the card is already flipped open, clicking it flips it closed and immediately re-locks it!
     if (openCards.has(index)) {
-      toggleCard(index);
+      setOpenCards((prev) => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
       return;
     }
-    if (isPhotoUnlocked(index)) {
-      toggleCard(index);
-    } else {
-      setTargetCardIndex(index);
-      setPinAction("flip");
-      setPinInput("");
-      setPinError("");
-      setIsShaking(false);
-      setPinSuccess(false);
-      setPinModalOpen(true);
-    }
+
+    // Card is closed: must enter PIN 1216 to unlock and open it!
+    setTargetCardIndex(index);
+    setPinAction("flip");
+    setPinInput("");
+    setPinError("");
+    setIsShaking(false);
+    setPinSuccess(false);
+    setPinModalOpen(true);
   }
 
   function handleReadNoteClick(index: number) {
-    if (isPhotoUnlocked(index)) {
-      setSelectedIndex(index);
-    } else {
-      setTargetCardIndex(index);
-      setPinAction("dialog");
-      setPinInput("");
-      setPinError("");
-      setIsShaking(false);
-      setPinSuccess(false);
-      setPinModalOpen(true);
-    }
+    // Opening note dialog: must enter PIN 1216!
+    setTargetCardIndex(index);
+    setPinAction("dialog");
+    setPinInput("");
+    setPinError("");
+    setIsShaking(false);
+    setPinSuccess(false);
+    setPinModalOpen(true);
   }
 
   function handlePinSubmit(e: FormEvent) {
@@ -170,14 +141,12 @@ function MemoriesPage() {
       setPinError("");
       setTimeout(() => {
         if (targetCardIndex !== null) {
-          setUnlockedPhotos((prev) => {
-            const next = new Set(prev);
-            next.add(targetCardIndex);
-            try { sessionStorage.setItem("aravinth_unlocked_photos", JSON.stringify([...next])); } catch {}
-            return next;
-          });
           if (pinAction === "flip") {
-            toggleCard(targetCardIndex);
+            setOpenCards((prev) => {
+              const next = new Set(prev);
+              next.add(targetCardIndex);
+              return next;
+            });
           } else {
             setSelectedIndex(targetCardIndex);
           }
@@ -185,7 +154,7 @@ function MemoriesPage() {
         setPinModalOpen(false);
         setPinSuccess(false);
         setPinInput("");
-      }, 400);
+      }, 350);
     } else {
       setPinError("Incorrect PIN! Try again ❤️");
       setIsShaking(true);
@@ -193,40 +162,15 @@ function MemoriesPage() {
     }
   }
 
-  function handleUnlockAll() {
-    if (pinInput.trim() === SECRET_PHOTO_PIN) {
-      setPinSuccess(true);
-      setPinError("");
-      setTimeout(() => {
-        setIsAllUnlocked(true);
-        const all = new Set(Array.from({ length: memories.length }, (_, i) => i));
-        setUnlockedPhotos(all);
-        try { sessionStorage.setItem("aravinth_unlocked_photos", "ALL"); } catch {}
-        if (targetCardIndex !== null) {
-          if (pinAction === "flip") toggleCard(targetCardIndex);
-          else setSelectedIndex(targetCardIndex);
-        }
-        setPinModalOpen(false);
-        setPinSuccess(false);
-        setPinInput("");
-      }, 400);
-    } else {
-      setPinError("Enter secret PIN first to unlock all memories! 💕");
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500);
-    }
-  }
-
-  function handleLockPhotos() {
-    setUnlockedPhotos(new Set());
-    setIsAllUnlocked(false);
+  // Closes all flipped cards (immediately locks them)
+  function handleLockAllPhotos() {
     setOpenCards(new Set());
-    try { sessionStorage.removeItem("aravinth_unlocked_photos"); } catch {}
+    setSelectedIndex(null);
   }
 
   const selectedMemory = selectedIndex === null ? null : memories[selectedIndex];
   const targetMemory = targetCardIndex === null ? null : memories[targetCardIndex];
-  const hasAnyUnlocked = isAllUnlocked || unlockedPhotos.size > 0;
+  const hasAnyOpen = openCards.size > 0;
 
   return (
     <main
@@ -245,16 +189,16 @@ function MemoriesPage() {
           <span>Mrs. Aravinth</span>
         </a>
         <div className="flex items-center gap-2">
-          {hasAnyUnlocked && (
+          {hasAnyOpen && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleLockPhotos}
+              onClick={handleLockAllPhotos}
               className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
-              title="Lock photos again"
+              title="Close and lock all photos"
             >
               <LockKeyhole size={14} className="mr-1" />
-              Lock pics
+              Lock all
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={handleLock} aria-label="Lock memories">
@@ -279,7 +223,6 @@ function MemoriesPage() {
         <div className="memory-collection">
           {memories.map((memory, index) => {
             const isOpen = openCards.has(index);
-            const isUnlocked = isPhotoUnlocked(index);
 
             return (
             <article className="memory-item" key={memory.number}>
@@ -295,11 +238,7 @@ function MemoriesPage() {
                     <span className="memory-number">{memory.number}</span>
                     <span className="memory-envelope"><Mail size={26} /><Heart className="memory-envelope-heart" size={14} fill="currentColor" /></span>
                     <span className="memory-flip-title">{memory.title}</span>
-                    {!isUnlocked ? (
-                      <span className="memory-card-lock-tag"><LockKeyhole size={11} /> Locked</span>
-                    ) : (
-                      <span className="memory-flip-hint">Tap to open</span>
-                    )}
+                    <span className="memory-card-lock-tag"><LockKeyhole size={11} /> Locked</span>
                   </span>
                   <span className="memory-flip-back" aria-hidden={!isOpen}>
                     <span className="memory-card-photo">
@@ -319,7 +258,7 @@ function MemoriesPage() {
               </div>
               <div className="memory-card-action">
                 <Button variant="ghost" size="sm" className="memory-read-btn" onClick={() => handleReadNoteClick(index)}>
-                  {!isUnlocked ? <LockKeyhole size={13} className="text-rose-500 mr-1" /> : <Heart size={14} fill="currentColor" className="mr-1" />}
+                  <LockKeyhole size={13} className="text-rose-500 mr-1" />
                   Read note
                 </Button>
               </div>
@@ -371,10 +310,6 @@ function MemoriesPage() {
               <button type="submit" className="photo-pin-submit-btn">
                 <Heart size={16} fill="currentColor" />
                 Unlock This Photo
-              </button>
-              <button type="button" onClick={handleUnlockAll} className="photo-pin-all-btn">
-                <Unlock size={14} />
-                Unlock All Photos
               </button>
             </div>
           </form>
