@@ -51,6 +51,7 @@ export const unlockLoveMemories = createServerFn({ method: "POST" })
       (await secureMatch(data.password, expected)) ||
       (await secureMatch(inputLower, expected.toLowerCase())) ||
       (await secureMatch(inputLower, "love")) ||
+      (await secureMatch(inputLower, "1216")) ||
       (await secureMatch(inputLower, "aravinth")) ||
       (await secureMatch(inputLower, "mrs aravinth")) ||
       (await secureMatch(inputLower, "mrs. aravinth"));

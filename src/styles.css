@@ -1657,3 +1657,179 @@ div[class*="lovable-watermark"] {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   PHOTO PIN LOCK (1216 Secret Code)
+   ========================================================================== */
+.photo-pin-dialog-content {
+  max-width: 420px !important;
+  border-radius: 26px !important;
+  border: 1.5px solid rgba(244, 63, 94, 0.3) !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 24px 60px -15px rgba(225, 29, 72, 0.28) !important;
+  padding: 30px 26px !important;
+  text-align: center;
+}
+
+.photo-pin-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.photo-pin-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
+  color: #e11d48;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  box-shadow: 0 8px 20px -4px rgba(244, 63, 94, 0.25);
+  animation: memory-pulse 2.2s infinite;
+}
+
+.photo-pin-title {
+  margin: 0;
+  font-family: var(--font-display, "Nunito", sans-serif);
+  font-size: 22px;
+  font-weight: 750;
+  color: #881337;
+}
+
+.photo-pin-desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.photo-pin-desc strong {
+  color: #be123c;
+}
+
+.photo-pin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.photo-pin-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.photo-pin-input {
+  width: 100% !important;
+  height: 56px !important;
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  letter-spacing: 0.45em !important;
+  color: #be123c !important;
+  border-radius: 18px !important;
+  border: 2px solid rgba(244, 63, 94, 0.35) !important;
+  background: #ffffff !important;
+  transition: all 0.25s ease !important;
+}
+
+.photo-pin-input:focus {
+  outline: none !important;
+  border-color: #e11d48 !important;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.18) !important;
+}
+
+.photo-pin-shake {
+  animation: photo-pin-shake 0.45s ease-in-out;
+}
+
+@keyframes photo-pin-shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-8px); }
+  30%, 60%, 90% { transform: translateX(8px); }
+}
+
+.photo-pin-error {
+  margin: -4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e11d48;
+}
+
+.photo-pin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.photo-pin-submit-btn {
+  width: 100%;
+  height: 46px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 8px 22px -3px rgba(225, 29, 72, 0.35) !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.photo-pin-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px -3px rgba(225, 29, 72, 0.45) !important;
+}
+
+.photo-pin-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.photo-pin-all-btn {
+  width: 100%;
+  font-size: 13px;
+  color: #9f1239;
+  background: #fff1f2;
+  border: 1px dashed rgba(244, 63, 94, 0.35);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.photo-pin-all-btn:hover {
+  background: #ffe4e6;
+  border-color: #f43f5e;
+}
+
+/* Card Lock Badge on closed cards */
+.memory-card-lock-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #be123c;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  margin-top: 6px;
+}
+

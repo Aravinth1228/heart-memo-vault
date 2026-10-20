@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Copy, Heart, LockKeyhole, Mail, Sparkles } from "lucide-react";
+import { Check, Copy, Heart, KeyRound, LockKeyhole, Mail, Sparkles, Unlock } from "lucide-react";
 
 import loveBackdrop from "@/assets/love-memory-backdrop.jpg";
 import origMemory01 from "@/assets/original-memories/memory-01.webp";
@@ -23,6 +23,7 @@ import photo07 from "@/assets/memories/photo-07.jpg";
 import photo08 from "@/assets/memories/photo-08.jpg";
 import photo09 from "@/assets/memories/photo-09.jpg";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -78,12 +79,43 @@ const BUNDLED_MEMORY_PHOTOS = [
   photo09,
 ];
 
+const SECRET_PHOTO_PIN = "1216";
+
 function MemoriesPage() {
   const memories = Route.useLoaderData();
   const navigate = useNavigate();
   const lockMemories = useServerFn(lockLoveMemories);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [openCards, setOpenCards] = useState<Set<number>>(() => new Set());
+
+  // Photo PIN 1216 states
+  const [unlockedPhotos, setUnlockedPhotos] = useState<Set<number>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem("aravinth_unlocked_photos");
+        if (saved === "ALL") return new Set(Array.from({ length: 50 }, (_, i) => i));
+        if (saved) return new Set(JSON.parse(saved));
+      } catch {}
+    }
+    return new Set();
+  });
+  const [isAllUnlocked, setIsAllUnlocked] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("aravinth_unlocked_photos") === "ALL";
+    }
+    return false;
+  });
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [targetCardIndex, setTargetCardIndex] = useState<number | null>(null);
+  const [pinAction, setPinAction] = useState<"flip" | "dialog">("flip");
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [isShaking, setIsShaking] = useState(false);
+  const [pinSuccess, setPinSuccess] = useState(false);
+
+  function isPhotoUnlocked(index: number) {
+    return isAllUnlocked || unlockedPhotos.has(index);
+  }
 
   async function handleLock() {
     await lockMemories();
@@ -99,7 +131,102 @@ function MemoriesPage() {
     });
   }
 
+  function handleCardClick(index: number) {
+    if (openCards.has(index)) {
+      toggleCard(index);
+      return;
+    }
+    if (isPhotoUnlocked(index)) {
+      toggleCard(index);
+    } else {
+      setTargetCardIndex(index);
+      setPinAction("flip");
+      setPinInput("");
+      setPinError("");
+      setIsShaking(false);
+      setPinSuccess(false);
+      setPinModalOpen(true);
+    }
+  }
+
+  function handleReadNoteClick(index: number) {
+    if (isPhotoUnlocked(index)) {
+      setSelectedIndex(index);
+    } else {
+      setTargetCardIndex(index);
+      setPinAction("dialog");
+      setPinInput("");
+      setPinError("");
+      setIsShaking(false);
+      setPinSuccess(false);
+      setPinModalOpen(true);
+    }
+  }
+
+  function handlePinSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (pinInput.trim() === SECRET_PHOTO_PIN) {
+      setPinSuccess(true);
+      setPinError("");
+      setTimeout(() => {
+        if (targetCardIndex !== null) {
+          setUnlockedPhotos((prev) => {
+            const next = new Set(prev);
+            next.add(targetCardIndex);
+            try { sessionStorage.setItem("aravinth_unlocked_photos", JSON.stringify([...next])); } catch {}
+            return next;
+          });
+          if (pinAction === "flip") {
+            toggleCard(targetCardIndex);
+          } else {
+            setSelectedIndex(targetCardIndex);
+          }
+        }
+        setPinModalOpen(false);
+        setPinSuccess(false);
+        setPinInput("");
+      }, 400);
+    } else {
+      setPinError("Wrong PIN! Enter 1216 to unlock ❤️");
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+    }
+  }
+
+  function handleUnlockAll() {
+    if (pinInput.trim() === SECRET_PHOTO_PIN) {
+      setPinSuccess(true);
+      setPinError("");
+      setTimeout(() => {
+        setIsAllUnlocked(true);
+        const all = new Set(Array.from({ length: memories.length }, (_, i) => i));
+        setUnlockedPhotos(all);
+        try { sessionStorage.setItem("aravinth_unlocked_photos", "ALL"); } catch {}
+        if (targetCardIndex !== null) {
+          if (pinAction === "flip") toggleCard(targetCardIndex);
+          else setSelectedIndex(targetCardIndex);
+        }
+        setPinModalOpen(false);
+        setPinSuccess(false);
+        setPinInput("");
+      }, 400);
+    } else {
+      setPinError("Enter 1216 first to unlock all memories! 💕");
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+    }
+  }
+
+  function handleLockPhotos() {
+    setUnlockedPhotos(new Set());
+    setIsAllUnlocked(false);
+    setOpenCards(new Set());
+    try { sessionStorage.removeItem("aravinth_unlocked_photos"); } catch {}
+  }
+
   const selectedMemory = selectedIndex === null ? null : memories[selectedIndex];
+  const targetMemory = targetCardIndex === null ? null : memories[targetCardIndex];
+  const hasAnyUnlocked = isAllUnlocked || unlockedPhotos.size > 0;
 
   return (
     <main
@@ -117,10 +244,24 @@ function MemoriesPage() {
         <a className="memory-brand" href="/memories" aria-label="Mrs. Aravinth memories">
           <span>Mrs. Aravinth</span>
         </a>
-        <Button variant="ghost" size="sm" onClick={handleLock} aria-label="Lock memories">
-          <LockKeyhole size={16} />
-          Lock
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasAnyUnlocked && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLockPhotos}
+              className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+              title="Lock photos with PIN 1216 again"
+            >
+              <LockKeyhole size={14} className="mr-1" />
+              Lock pics
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={handleLock} aria-label="Lock memories">
+            <LockKeyhole size={16} />
+            Lock
+          </Button>
+        </div>
       </header>
 
       <section className="memory-shell" aria-labelledby="memory-title">
@@ -128,8 +269,7 @@ function MemoriesPage() {
           <div className="memory-kicker"><Sparkles size={15} /> Just for you, with all my love</div>
           <h1 className="memory-title" id="memory-title">Our memories</h1>
           <p className="memory-lede">
-            Every photo holds a little piece of us. Here are a few reminders of how much I love
-            you and how much I miss you.
+            Every photo holds a little piece of us. Protected by our secret PIN (1216).
           </p>
           <span className="memory-count"><Heart size={14} fill="currentColor" /> {memories.length} little love notes</span>
         </header>
@@ -139,12 +279,14 @@ function MemoriesPage() {
         <div className="memory-collection">
           {memories.map((memory, index) => {
             const isOpen = openCards.has(index);
+            const isUnlocked = isPhotoUnlocked(index);
+
             return (
             <article className="memory-item" key={memory.number}>
               <button
                 type="button"
                 className={`memory-flip${isOpen ? " is-open" : ""}`}
-                onClick={() => toggleCard(index)}
+                onClick={() => handleCardClick(index)}
                 aria-pressed={isOpen}
                 aria-label={isOpen ? `Close memory ${memory.number}: ${memory.title}` : `Tap to open memory ${memory.number}: ${memory.title}`}
               >
@@ -153,7 +295,11 @@ function MemoriesPage() {
                     <span className="memory-number">{memory.number}</span>
                     <span className="memory-envelope"><Mail size={26} /><Heart className="memory-envelope-heart" size={14} fill="currentColor" /></span>
                     <span className="memory-flip-title">{memory.title}</span>
-                    <span className="memory-flip-hint">Tap to open</span>
+                    {!isUnlocked ? (
+                      <span className="memory-card-lock-tag"><LockKeyhole size={11} /> Enter 1216</span>
+                    ) : (
+                      <span className="memory-flip-hint">Tap to open</span>
+                    )}
                   </span>
                   <span className="memory-flip-back" aria-hidden={!isOpen}>
                     <span className="memory-card-photo">
@@ -172,8 +318,9 @@ function MemoriesPage() {
                 <span className="memory-card-teaser">{memory.teaser}</span>
               </div>
               <div className="memory-card-action">
-                <Button variant="ghost" size="sm" className="memory-read-btn" onClick={() => setSelectedIndex(index)}>
-                  <Heart size={14} fill="currentColor" /> Read note
+                <Button variant="ghost" size="sm" className="memory-read-btn" onClick={() => handleReadNoteClick(index)}>
+                  {!isUnlocked ? <LockKeyhole size={13} className="text-rose-500 mr-1" /> : <Heart size={14} fill="currentColor" className="mr-1" />}
+                  Read note
                 </Button>
               </div>
             </article>
@@ -184,6 +331,57 @@ function MemoriesPage() {
         <footer className="memory-footer"><Heart size={13} fill="currentColor" /> Always yours, Aravinth</footer>
       </section>
 
+      {/* Secret PIN Unlock Modal */}
+      <Dialog open={pinModalOpen} onOpenChange={(open) => !open && setPinModalOpen(false)}>
+        <DialogContent className="photo-pin-dialog-content">
+          <div className="photo-pin-header">
+            <div className="photo-pin-icon-badge">
+              <LockKeyhole size={28} />
+            </div>
+            <DialogTitle className="photo-pin-title">
+              {targetMemory ? `Unlock Memory #${targetMemory.number}` : "Secret Photo Locked"}
+            </DialogTitle>
+            <DialogDescription className="photo-pin-desc">
+              Enter our secret 4-digit PIN <strong>(1216)</strong> to open this memory photo 💕
+            </DialogDescription>
+          </div>
+
+          <form className="photo-pin-form" onSubmit={handlePinSubmit}>
+            <div className={`photo-pin-input-wrap ${isShaking ? "photo-pin-shake" : ""}`}>
+              <Input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                autoFocus
+                placeholder="••••"
+                value={pinInput}
+                onChange={(e) => {
+                  setPinInput(e.target.value);
+                  setPinError("");
+                }}
+                className="photo-pin-input"
+              />
+            </div>
+
+            {pinError && <p className="photo-pin-error">{pinError}</p>}
+            {pinSuccess && <p className="text-sm font-semibold text-emerald-600">Unlocked with love! 💕</p>}
+
+            <div className="photo-pin-actions">
+              <button type="submit" className="photo-pin-submit-btn">
+                <Heart size={16} fill="currentColor" />
+                Unlock This Photo
+              </button>
+              <button type="button" onClick={handleUnlockAll} className="photo-pin-all-btn">
+                <Unlock size={14} />
+                Unlock All Photos with 1216
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Memory Note Dialog */}
       <Dialog open={selectedMemory !== null} onOpenChange={(open) => !open && setSelectedIndex(null)}>
         <DialogContent className="memory-dialog-content">
           {selectedMemory && (
