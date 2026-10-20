@@ -187,7 +187,7 @@ function MemoriesPage() {
         setPinInput("");
       }, 400);
     } else {
-      setPinError("Wrong PIN! Enter 1216 to unlock ❤️");
+      setPinError("Incorrect PIN! Try again ❤️");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
     }
@@ -211,7 +211,7 @@ function MemoriesPage() {
         setPinInput("");
       }, 400);
     } else {
-      setPinError("Enter 1216 first to unlock all memories! 💕");
+      setPinError("Enter secret PIN first to unlock all memories! 💕");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
     }
@@ -251,7 +251,7 @@ function MemoriesPage() {
               size="sm"
               onClick={handleLockPhotos}
               className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
-              title="Lock photos with PIN 1216 again"
+              title="Lock photos again"
             >
               <LockKeyhole size={14} className="mr-1" />
               Lock pics
@@ -269,7 +269,7 @@ function MemoriesPage() {
           <div className="memory-kicker"><Sparkles size={15} /> Just for you, with all my love</div>
           <h1 className="memory-title" id="memory-title">Our memories</h1>
           <p className="memory-lede">
-            Every photo holds a little piece of us. Protected by our secret PIN (1216).
+            Every photo holds a little piece of us. Protected with our secret love PIN.
           </p>
           <span className="memory-count"><Heart size={14} fill="currentColor" /> {memories.length} little love notes</span>
         </header>
@@ -296,7 +296,7 @@ function MemoriesPage() {
                     <span className="memory-envelope"><Mail size={26} /><Heart className="memory-envelope-heart" size={14} fill="currentColor" /></span>
                     <span className="memory-flip-title">{memory.title}</span>
                     {!isUnlocked ? (
-                      <span className="memory-card-lock-tag"><LockKeyhole size={11} /> Enter 1216</span>
+                      <span className="memory-card-lock-tag"><LockKeyhole size={11} /> Locked</span>
                     ) : (
                       <span className="memory-flip-hint">Tap to open</span>
                     )}
@@ -342,7 +342,7 @@ function MemoriesPage() {
               {targetMemory ? `Unlock Memory #${targetMemory.number}` : "Secret Photo Locked"}
             </DialogTitle>
             <DialogDescription className="photo-pin-desc">
-              Enter our secret 4-digit PIN <strong>(1216)</strong> to open this memory photo 💕
+              Enter our secret 4-digit PIN to open this memory photo 💕
             </DialogDescription>
           </div>
 
@@ -374,7 +374,7 @@ function MemoriesPage() {
               </button>
               <button type="button" onClick={handleUnlockAll} className="photo-pin-all-btn">
                 <Unlock size={14} />
-                Unlock All Photos with 1216
+                Unlock All Photos
               </button>
             </div>
           </form>
